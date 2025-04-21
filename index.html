@@ -32,20 +32,32 @@
     }
 
     .item {
-      width: 100px;
-      height: 100px;
       position: absolute;
       top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%);
-      transition: left 0.1s ease;
+      transition: transform 0.1s ease;
     }
 
+    /* 圖形設定 */
     .dot {
-      background-color: #0077ff;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
     }
 
+    .solid-dot {
+      background-color: #0077ff;
+    }
+
+    .ring-dot {
+      border: 8px solid #ff4444;
+      background-color: transparent;
+    }
+
+    /* 圖片設定（圖片大小在這邊控制） */
     .img {
+      width: 150px;
       object-fit: contain;
     }
   </style>
@@ -58,12 +70,14 @@
 </div>
 
 <div class="container">
-  <!-- 左側元素 -->
-  <div id="leftDot" class="item dot" style="display: none;"></div>
-  <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
+  <!-- 左側圖形 -->
+  <div id="leftDot" class="item dot solid-dot" style="display: none;"></div>
+  <!-- 右側圖形 -->
+  <div id="rightDot" class="item dot ring-dot" style="display: none;"></div>
 
-  <!-- 右側元素 -->
-  <div id="rightDot" class="item dot" style="display: none;"></div>
+  <!-- 左側圖片 -->
+  <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
+  <!-- 右側圖片 -->
   <img id="rightImg" class="item img" src="right.png" alt="右圖" style="display: none;">
 </div>
 
@@ -76,19 +90,24 @@
   let mode = 'image'; // 預設使用圖片模式
   let distance = 0;
   const step = 2;
-  const maxDistance = window.innerWidth / 2 - 120;
+  const imageWidth = 150; // 你設定圖片寬度為 150px
+  const maxDistance = window.innerWidth / 2 - imageWidth;
 
   function updatePosition() {
-    const offsetLeft = `calc(50% - ${distance}px)`;
-    const offsetRight = `calc(50% + ${distance}px)`;
+    let offsetLeft, offsetRight;
 
-    // 根據模式決定操作哪個元素
     if (mode === 'dot') {
-      leftDot.style.left = offsetLeft;
-      rightDot.style.left = offsetRight;
+      offsetLeft = `translate(calc(-50% - ${distance}px), -50%)`;
+      offsetRight = `translate(calc(-50% + ${distance}px), -50%)`;
+
+      leftDot.style.transform = offsetLeft;
+      rightDot.style.transform = offsetRight;
     } else {
-      leftImg.style.left = offsetLeft;
-      rightImg.style.left = offsetRight;
+      offsetLeft = `translate(calc(-50% - ${distance}px), -50%)`;
+      offsetRight = `translate(calc(-50% + ${distance}px), -50%)`;
+
+      leftImg.style.transform = offsetLeft;
+      rightImg.style.transform = offsetRight;
     }
   }
 
@@ -100,14 +119,18 @@
       rightDot.style.display = 'block';
       leftImg.style.display = 'none';
       rightImg.style.display = 'none';
+
+      distance = 0; // 重設位置，讓圖形一開始重疊
     } else {
       leftDot.style.display = 'none';
       rightDot.style.display = 'none';
       leftImg.style.display = 'block';
       rightImg.style.display = 'block';
+
+      distance = imageWidth / 2; // 圖片一開始緊貼，剛好左右貼齊
     }
 
-    updatePosition(); // 每次切換模式都要更新位置
+    updatePosition();
   }
 
   window.addEventListener('keydown', (e) => {
