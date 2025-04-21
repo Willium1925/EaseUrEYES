@@ -6,81 +6,108 @@
   <style>
     body {
       margin: 0;
+      padding: 0;
       height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
       background-color: #f0f8ff;
+    }
+
+    .button-group {
+      margin: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 0 10px;
+      cursor: pointer;
     }
 
     .container {
       position: relative;
       width: 100%;
-      height: 200px;
+      height: 300px;
     }
 
-    .img {
+    .item {
       width: 100px;
       height: 100px;
       position: absolute;
       top: 50%;
-      transform: translateY(-50%);
+      transform: translate(-50%, -50%);
       transition: left 0.1s ease;
-    }
-    #leftImg {
-      left: 50%;
-    }
-    #rightImg {
-      left: 50%;
     }
 
     .dot {
-      width: 50px;
-      height: 50px;
       background-color: #0077ff;
       border-radius: 50%;
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      transition: left 0.1s ease;
     }
 
-    #leftDot {
-      left: 50%;
-    }
-
-    #rightDot {
-      left: 50%;
+    .img {
+      object-fit: contain;
     }
   </style>
 </head>
 <body>
-<div class="container">
-  <img id="leftImg" class="img" src="left.png" alt="左圖">
-  <img id="rightImg" class="img" src="right.png" alt="右圖">
 
-  <div class="dot" id="leftDot"></div>
-  <div class="dot" id="rightDot"></div>
+<div class="button-group">
+  <button onclick="switchMode('dot')">顯示圖形</button>
+  <button onclick="switchMode('image')">顯示圖片</button>
+</div>
+
+<div class="container">
+  <!-- 左側元素 -->
+  <div id="leftDot" class="item dot" style="display: none;"></div>
+  <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
+
+  <!-- 右側元素 -->
+  <div id="rightDot" class="item dot" style="display: none;"></div>
+  <img id="rightImg" class="item img" src="right.png" alt="右圖" style="display: none;">
 </div>
 
 <script>
+  const leftDot = document.getElementById('leftDot');
+  const rightDot = document.getElementById('rightDot');
   const leftImg = document.getElementById('leftImg');
   const rightImg = document.getElementById('rightImg');
 
-  const leftDot = document.getElementById('leftDot');
-  const rightDot = document.getElementById('rightDot');
-
-  let distance = 0; // 初始距離（0 = 圖案重疊）
-  const step = 5; // 每次按鍵移動多少 px
-  const maxDistance = window.innerWidth / 2 - 60; // 離畫面邊界的最大距離（50px dot + margin）
+  let mode = 'image'; // 預設使用圖片模式
+  let distance = 0;
+  const step = 2;
+  const maxDistance = window.innerWidth / 2 - 120;
 
   function updatePosition() {
-    // 左圖從中央向左，右圖從中央向右
-    leftImg.style.left = `calc(50% - ${distance}px)`;
-    rightImg.style.left = `calc(50% + ${distance}px)`;
+    const offsetLeft = `calc(50% - ${distance}px)`;
+    const offsetRight = `calc(50% + ${distance}px)`;
 
-    leftDot.style.left = `calc(50% - ${distance}px)`;
-    rightDot.style.left = `calc(50% + ${distance}px)`;
+    // 根據模式決定操作哪個元素
+    if (mode === 'dot') {
+      leftDot.style.left = offsetLeft;
+      rightDot.style.left = offsetRight;
+    } else {
+      leftImg.style.left = offsetLeft;
+      rightImg.style.left = offsetRight;
+    }
+  }
+
+  function switchMode(newMode) {
+    mode = newMode;
+
+    if (mode === 'dot') {
+      leftDot.style.display = 'block';
+      rightDot.style.display = 'block';
+      leftImg.style.display = 'none';
+      rightImg.style.display = 'none';
+    } else {
+      leftDot.style.display = 'none';
+      rightDot.style.display = 'none';
+      leftImg.style.display = 'block';
+      rightImg.style.display = 'block';
+    }
+
+    updatePosition(); // 每次切換模式都要更新位置
   }
 
   window.addEventListener('keydown', (e) => {
@@ -97,7 +124,9 @@
     }
   });
 
-  updatePosition(); // 初始位置設定
+  // 初始化
+  switchMode('image');
 </script>
+
 </body>
 </html>
