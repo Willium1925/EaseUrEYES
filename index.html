@@ -4,18 +4,29 @@
   <meta charset="UTF-8">
   <title>眼睛放鬆模擬器</title>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      height: 100%;
       background-color: #f0f8ff;
+      font-family: sans-serif;
     }
 
+    /* 整體排版：上下兩區 */
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* 上方按鈕區 */
     .button-group {
-      margin: 20px;
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #e0f0ff;
+      border-bottom: 1px solid #ccc;
     }
 
     button {
@@ -25,10 +36,10 @@
       cursor: pointer;
     }
 
-    .container {
+    /* 下方顯示區 */
+    .display-area {
+      flex: 1;
       position: relative;
-      width: 100%;
-      height: 300px;
     }
 
     .item {
@@ -39,7 +50,7 @@
       transition: transform 0.1s ease;
     }
 
-    /* 圖形設定 */
+    /* 圖形樣式 */
     .dot {
       width: 100px;
       height: 100px;
@@ -55,7 +66,7 @@
       background-color: transparent;
     }
 
-    /* 圖片設定（圖片大小在這邊控制） */
+    /* 圖片樣式 */
     .img {
       width: 150px;
       object-fit: contain;
@@ -64,21 +75,25 @@
 </head>
 <body>
 
-<div class="button-group">
-  <button onclick="switchMode('dot')">顯示圖形</button>
-  <button onclick="switchMode('image')">顯示圖片</button>
-</div>
+<div class="wrapper">
+  <!-- 上方按鈕區 -->
+  <div class="button-group">
+    <button onclick="switchMode('dot')">顯示圖形</button>
+    <button onclick="switchMode('image')">顯示圖片</button>
+  </div>
 
-<div class="container">
-  <!-- 左側圖形 -->
-  <div id="leftDot" class="item dot solid-dot" style="display: none;"></div>
-  <!-- 右側圖形 -->
-  <div id="rightDot" class="item dot ring-dot" style="display: none;"></div>
+  <!-- 下方顯示區 -->
+  <div class="display-area">
+    <!-- 左側圖形 -->
+    <div id="leftDot" class="item dot solid-dot" style="display: none;"></div>
+    <!-- 右側圖形 -->
+    <div id="rightDot" class="item dot ring-dot" style="display: none;"></div>
 
-  <!-- 左側圖片 -->
-  <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
-  <!-- 右側圖片 -->
-  <img id="rightImg" class="item img" src="right.png" alt="右圖" style="display: none;">
+    <!-- 左側圖片 -->
+    <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
+    <!-- 右側圖片 -->
+    <img id="rightImg" class="item img" src="right.png" alt="右圖" style="display: none;">
+  </div>
 </div>
 
 <script>
@@ -87,25 +102,20 @@
   const leftImg = document.getElementById('leftImg');
   const rightImg = document.getElementById('rightImg');
 
-  let mode = 'image'; // 預設使用圖片模式
+  let mode = 'image'; // 預設為圖片模式
   let distance = 0;
   const step = 2;
-  const imageWidth = 150; // 你設定圖片寬度為 150px
+  const imageWidth = 150;
   const maxDistance = window.innerWidth / 2 - imageWidth;
 
   function updatePosition() {
-    let offsetLeft, offsetRight;
+    const offsetLeft = `translate(calc(-50% - ${distance}px), -50%)`;
+    const offsetRight = `translate(calc(-50% + ${distance}px), -50%)`;
 
     if (mode === 'dot') {
-      offsetLeft = `translate(calc(-50% - ${distance}px), -50%)`;
-      offsetRight = `translate(calc(-50% + ${distance}px), -50%)`;
-
       leftDot.style.transform = offsetLeft;
       rightDot.style.transform = offsetRight;
     } else {
-      offsetLeft = `translate(calc(-50% - ${distance}px), -50%)`;
-      offsetRight = `translate(calc(-50% + ${distance}px), -50%)`;
-
       leftImg.style.transform = offsetLeft;
       rightImg.style.transform = offsetRight;
     }
@@ -119,15 +129,13 @@
       rightDot.style.display = 'block';
       leftImg.style.display = 'none';
       rightImg.style.display = 'none';
-
-      distance = 0; // 重設位置，讓圖形一開始重疊
+      distance = 0; // 重疊起始
     } else {
       leftDot.style.display = 'none';
       rightDot.style.display = 'none';
       leftImg.style.display = 'block';
       rightImg.style.display = 'block';
-
-      distance = imageWidth / 2; // 圖片一開始緊貼，剛好左右貼齊
+      distance = imageWidth / 2; // 左右緊鄰
     }
 
     updatePosition();
