@@ -40,15 +40,14 @@
     .display-area {
       flex: 1;
       position: relative;
+      overflow: hidden; /* 確保圖片移動時不超出範圍 */
     }
 
     .item {
       position: absolute;
       top: 50%;
-      left: 50%; /* 🔥加這一行 */
-      /* 移除左右定位，改用 JavaScript 控制 */
-      transform: translateY(-50%); /* 僅保留垂直方向的居中 */
-      transition: transform 0.1s ease;
+      transform: translateY(-50%);
+      transition: left 0.1s ease; /* 使用 left 屬性進行平滑移動 */
     }
 
     /* 圖形樣式 */
@@ -70,7 +69,6 @@
     /* 圖片樣式 */
     .img {
       height: 600px;
-      /* width: auto; 讓寬度根據圖片內容自動調整 */
     }
   </style>
 </head>
@@ -83,8 +81,8 @@
   </div>
 
   <div class="display-area">
-    <div id="leftDot" class="item dot solid-dot" style="display: none;"></div>
-    <div id="rightDot" class="item dot ring-dot" style="display: none;"></div>
+    <div id="leftDot" class="item dot solid-dot" style="display: none; left: calc(50% - 50px); transform: translate(-50%, -50%);"></div>
+    <div id="rightDot" class="item dot ring-dot" style="display: none; left: calc(50% - 50px); transform: translate(-50%, -50%);"></div>
 
     <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
     <img id="rightImg" class="item img" src="right.png" alt="右圖" style="display: none;">
@@ -124,14 +122,12 @@
   };
 
   function updatePosition() {
-    const offset = distance; // 統一使用 offset 變數
-
     if (mode === 'dot') {
-      leftDot.style.transform = `translate(calc(-50% - ${offset}px), -50%)`;
-      rightDot.style.transform = `translate(calc(-50% + ${offset}px), -50%)`;
-    } else {
-      leftImg.style.transform = `translate(calc(-50% - ${offset}px), -50%)`;
-      rightImg.style.transform = `translate(calc(-50% + ${offset}px), -50%)`;
+      leftDot.style.left = `calc(50% - ${distance}px)`;
+      rightDot.style.left = `calc(50% + ${distance}px)`;
+    } else if (mode === 'image') {
+      leftImg.style.left = `calc(50% - ${leftImageWidth}px - ${distance}px)`;
+      rightImg.style.left = `calc(50% + ${distance}px)`;
     }
   }
 
@@ -147,9 +143,8 @@
 
   function setInitialImagePosition() {
     if (mode === 'image' && leftImageWidth > 0 && rightImageWidth > 0) {
-      const centerX = displayArea.offsetWidth / 2;
-      leftImg.style.left = `${centerX - leftImageWidth}px`;
-      rightImg.style.left = `${centerX}px`;
+      leftImg.style.left = `calc(50% - ${leftImageWidth}px)`;
+      rightImg.style.left = `50%`;
     }
   }
 
@@ -162,13 +157,8 @@
       rightDot.style.display = 'block';
       leftImg.style.display = 'none';
       rightImg.style.display = 'none';
-      leftImg.style.left = '';
-      rightImg.style.left = '';
-      // 明確設定圖形的初始 transform，使其居中
-      leftDot.style.transform = `translate(-50%, -50%)`;
-      rightDot.style.transform = `translate(-50%, -50%)`;
       updateMaxDistance();
-      updatePosition(); // 觸發 updatePosition 以應用 distance 的偏移
+      updatePosition();
     } else {
       leftDot.style.display = 'none';
       rightDot.style.display = 'none';
@@ -176,6 +166,7 @@
       rightImg.style.display = 'block';
       setInitialImagePosition();
       updateMaxDistance();
+      updatePosition();
     }
   }
 
