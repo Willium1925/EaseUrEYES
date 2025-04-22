@@ -45,8 +45,9 @@
     .item {
       position: absolute;
       top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      left: 50%; /* 🔥加這一行 */
+      /* 移除左右定位，改用 JavaScript 控制 */
+      transform: translateY(-50%); /* 僅保留垂直方向的居中 */
       transition: transform 0.1s ease;
     }
 
@@ -68,30 +69,24 @@
 
     /* 圖片樣式 */
     .img {
-      width: 150px;
-      object-fit: contain;
+      height: 600px;
+      /* width: auto; 讓寬度根據圖片內容自動調整 */
     }
   </style>
 </head>
 <body>
 
 <div class="wrapper">
-  <!-- 上方按鈕區 -->
   <div class="button-group">
     <button onclick="switchMode('dot')">顯示圖形</button>
     <button onclick="switchMode('image')">顯示圖片</button>
   </div>
 
-  <!-- 下方顯示區 -->
   <div class="display-area">
-    <!-- 左側圖形 -->
     <div id="leftDot" class="item dot solid-dot" style="display: none;"></div>
-    <!-- 右側圖形 -->
     <div id="rightDot" class="item dot ring-dot" style="display: none;"></div>
 
-    <!-- 左側圖片 -->
     <img id="leftImg" class="item img" src="left.png" alt="左圖" style="display: none;">
-    <!-- 右側圖片 -->
     <img id="rightImg" class="item img" src="right.png" alt="右圖" style="display: none;">
   </div>
 </div>
@@ -101,44 +96,87 @@
   const rightDot = document.getElementById('rightDot');
   const leftImg = document.getElementById('leftImg');
   const rightImg = document.getElementById('rightImg');
+  const displayArea = document.querySelector('.display-area');
 
   let mode = 'image'; // 預設為圖片模式
   let distance = 0;
   const step = 3;
-  const imageWidth = 150;
-  const maxDistance = window.innerWidth / 2 - imageWidth;
+  const dotWidth = 100; // 圖形寬度 (直徑)
+  let leftImageWidth = 0;
+  let rightImageWidth = 0;
+  let maxDistance = 0;
+
+  // 在圖片載入後取得實際寬度並設定初始位置
+  leftImg.onload = function() {
+    leftImageWidth = this.offsetWidth;
+    updateMaxDistance();
+    if (mode === 'image') {
+      setInitialImagePosition();
+    }
+  };
+
+  rightImg.onload = function() {
+    rightImageWidth = this.offsetWidth;
+    updateMaxDistance();
+    if (mode === 'image') {
+      setInitialImagePosition();
+    }
+  };
 
   function updatePosition() {
-    const offsetLeft = `translate(calc(-50% - ${distance}px), -50%)`;
-    const offsetRight = `translate(calc(-50% + ${distance}px), -50%)`;
+    const offset = distance; // 統一使用 offset 變數
 
     if (mode === 'dot') {
-      leftDot.style.transform = offsetLeft;
-      rightDot.style.transform = offsetRight;
+      leftDot.style.transform = `translate(calc(-50% - ${offset}px), -50%)`;
+      rightDot.style.transform = `translate(calc(-50% + ${offset}px), -50%)`;
     } else {
-      leftImg.style.transform = offsetLeft;
-      rightImg.style.transform = offsetRight;
+      leftImg.style.transform = `translate(calc(-50% - ${offset}px), -50%)`;
+      rightImg.style.transform = `translate(calc(-50% + ${offset}px), -50%)`;
+    }
+  }
+
+  function updateMaxDistance() {
+    if (mode === 'image' && leftImageWidth > 0 && rightImageWidth > 0) {
+      maxDistance = window.innerWidth / 2 - (leftImageWidth / 2 + rightImageWidth / 2);
+    } else if (mode === 'dot') {
+      maxDistance = window.innerWidth / 2 - dotWidth / 2;
+    } else {
+      maxDistance = 0; // 初始狀態或圖片未載入時
+    }
+  }
+
+  function setInitialImagePosition() {
+    if (mode === 'image' && leftImageWidth > 0 && rightImageWidth > 0) {
+      const centerX = displayArea.offsetWidth / 2;
+      leftImg.style.left = `${centerX - leftImageWidth}px`;
+      rightImg.style.left = `${centerX}px`;
     }
   }
 
   function switchMode(newMode) {
     mode = newMode;
+    distance = 0; // 切換模式時重置 distance
 
     if (mode === 'dot') {
       leftDot.style.display = 'block';
       rightDot.style.display = 'block';
       leftImg.style.display = 'none';
       rightImg.style.display = 'none';
-      distance = 0; // 重疊起始
+      leftImg.style.left = '';
+      rightImg.style.left = '';
+      // 明確設定圖形的初始 transform，使其居中
+      leftDot.style.transform = `translate(-50%, -50%)`;
+      rightDot.style.transform = `translate(-50%, -50%)`;
+      updateMaxDistance();
+      updatePosition(); // 觸發 updatePosition 以應用 distance 的偏移
     } else {
       leftDot.style.display = 'none';
       rightDot.style.display = 'none';
       leftImg.style.display = 'block';
       rightImg.style.display = 'block';
-      distance = imageWidth / 2; // 左右緊鄰
+      setInitialImagePosition();
+      updateMaxDistance();
     }
-
-    updatePosition();
   }
 
   window.addEventListener('keydown', (e) => {
