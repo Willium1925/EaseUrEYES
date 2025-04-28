@@ -21,10 +21,10 @@
 
     /* 上方控制區 */
     .control-group {
-      height: auto; /* 根據內容自動調整高度 */
+      height: auto;
       padding: 10px;
       display: flex;
-      flex-direction: column; /* 改為垂直排列 */
+      flex-direction: column;
       align-items: center;
       background-color: #4c5359;
       border-bottom: 1px solid #ccc;
@@ -34,7 +34,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-bottom: 10px; /* 按鈕區塊下方增加間距 */
+      margin-bottom: 10px;
     }
 
     button {
@@ -47,7 +47,7 @@
     .url-input-group {
       display: flex;
       align-items: center;
-      margin-bottom: 10px; /* 輸入框區塊下方增加間距 */
+      margin-bottom: 10px;
     }
 
     label {
@@ -61,28 +61,28 @@
       font-size: 16px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      flex-grow: 1; /* 讓輸入框填滿剩餘空間 */
+      flex-grow: 1;
     }
 
     /* 下方顯示區 */
     .display-area {
       flex: 1;
-      position: relative;
-      overflow: hidden; /* 確保圖片移動時不超出範圍 */
+      display: flex;
+      overflow: hidden;
+    }
+
+    .image-container {
+      flex: 1;
+      display: flex;
+      justify-content: center; /* 圖片在容器中水平居中 */
+      align-items: center; /* 圖片在容器中垂直居中 */
+      overflow: hidden;
     }
 
     .item {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      transition: left 0.1s ease, height 0.1s ease; /* 加入 height 的 transition */
-      height: 300px; /* 預設高度 */
-    }
-
-    /* 圖片樣式 */
-    .img {
-      display: block; /* 確保圖片不會有額外間距 */
-      max-width: none; /* 移除最大寬度限制，讓 JavaScript 控制大小 */
+      transition: transform 0.1s ease; /* 只對 transform 應用 transition */
+      max-width: 100%; /* 確保圖片不會超出容器 */
+      max-height: 100%;
     }
   </style>
 </head>
@@ -91,111 +91,76 @@
 <div class="wrapper">
   <div class="control-group">
     <div class="button-group">
-      <button onclick="resetPosition()">重置位置</button>
+      <button onclick="resetTransform()">重置縮放與位置</button>
+      <button onclick="loadDefaultImages()">顯示預設圖片</button>
     </div>
     <div class="url-input-group">
-      <label for="leftImageUrl">左圖網址：</label>
-      <input type="text" id="leftImageUrl" placeholder="請輸入左圖網址" onchange="loadImages()">
-    </div>
-    <div class="url-input-group">
-      <label for="rightImageUrl">右圖網址：</label>
-      <input type="text" id="rightImageUrl" placeholder="請輸入右圖網址" onchange="loadImages()">
+      <label for="imageUrl">圖片網址：</label>
+      <input type="text" id="imageUrl" placeholder="請輸入圖片網址" onchange="loadCustomImages()">
     </div>
   </div>
 
   <div class="display-area">
-    <img id="leftImg" class="item img" src="wleft.gif" alt="左圖">
-    <img id="rightImg" class="item img" src="wright.gif" alt="右圖">
+    <div class="image-container">
+      <img id="leftImg" class="item img" src="img/tsura.gif" alt="左圖">
+    </div>
+    <div class="image-container">
+      <img id="rightImg" class="item img" src="img/tsura.gif" alt="右圖">
+    </div>
   </div>
 </div>
 
 <script>
   const leftImg = document.getElementById('leftImg');
   const rightImg = document.getElementById('rightImg');
-  const displayArea = document.querySelector('.display-area');
-  const leftImageUrlInput = document.getElementById('leftImageUrl');
-  const rightImageUrlInput = document.getElementById('rightImageUrl');
+  const imageUrlInput = document.getElementById('imageUrl');
+  const defaultImageUrl = 'img/tsura.gif'; // 設定預設圖片的路徑
 
-  let distance = 0;
-  const moveStep = 3;
-  let imageHeight = 300; // 初始圖片高度
-  const scaleStep = 5; // 調整圖片大小的步長
-  let leftImageWidth = 0;
-  let rightImageWidth = 0;
-  let maxDistance = 0;
+  let scale = 1; // 初始縮放比例
+  const scaleStep = 0.05;
+  let translateX = 0; // 左右移動的距離
+  const translateStep = 5;
 
-  // 在圖片載入後取得實際寬度並設定初始位置
-  function updateImageDimensions() {
-    leftImageWidth = leftImg.offsetWidth;
-    rightImageWidth = rightImg.offsetWidth;
-    updateMaxDistance();
-    setInitialImagePosition();
+  function updateImageTransform() {
+    leftImg.style.transform = `scale(${scale}) translateX(${-translateX}px)`;
+    rightImg.style.transform = `scale(${scale}) translateX(${translateX}px)`;
   }
 
-  leftImg.onload = updateImageDimensions;
-  rightImg.onload = updateImageDimensions;
-
-  function updatePosition() {
-    leftImg.style.left = `calc(50% - ${leftImageWidth}px - ${distance}px)`;
-    rightImg.style.left = `calc(50% + ${distance}px)`;
+  function resetTransform() {
+    scale = 1;
+    translateX = 0;
+    updateImageTransform();
   }
 
-  function updateMaxDistance() {
-    if (leftImageWidth > 0 && rightImageWidth > 0) {
-      maxDistance = window.innerWidth / 2 - (leftImageWidth / 2 + rightImageWidth / 2);
-    } else {
-      maxDistance = 0; // 初始狀態或圖片未載入時
-    }
+  function loadCustomImages() {
+    const imageUrl = imageUrlInput.value;
+    leftImg.src = imageUrl || 'wleft.gif'; // 如果沒有輸入，保留上次或預設
+    rightImg.src = imageUrl || 'wright.gif'; // 如果沒有輸入，保留上次或預設
   }
 
-  function setInitialImagePosition() {
-    if (leftImageWidth > 0 && rightImageWidth > 0) {
-      leftImg.style.left = `calc(50% - ${leftImageWidth}px)`;
-      rightImg.style.left = `50%`;
-    }
-  }
-
-  function resetPosition() {
-    distance = 0;
-    updatePosition();
-  }
-
-  function loadImages() {
-    const leftUrl = leftImageUrlInput.value;
-    const rightUrl = rightImageUrlInput.value;
-    leftImg.src = leftUrl || 'wleft.gif'; // 如果沒有輸入網址，則使用預設圖片
-    rightImg.src = rightUrl || 'wright.gif'; // 如果沒有輸入網址，則使用預設圖片
+  function loadDefaultImages() {
+    leftImg.src = defaultImageUrl;
+    rightImg.src = defaultImageUrl;
+    imageUrlInput.value = ''; // 清空輸入框
   }
 
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') {
-      if (distance < maxDistance) {
-        distance += moveStep;
-        updatePosition();
-      }
-    } else if (e.key === 'ArrowLeft') {
-      if (distance > 0) {
-        distance -= moveStep;
-        updatePosition();
-      }
-    } else if (e.key === 'ArrowUp') {
-      imageHeight += scaleStep;
-      leftImg.style.height = `${imageHeight}px`;
-      rightImg.style.height = `${imageHeight}px`;
-      updateImageDimensions(); // 更新圖片尺寸相關的計算
+    if (e.key === 'ArrowUp') {
+      scale += scaleStep;
+      updateImageTransform();
     } else if (e.key === 'ArrowDown') {
-      if (imageHeight > scaleStep) {
-        imageHeight -= scaleStep;
-        leftImg.style.height = `${imageHeight}px`;
-        rightImg.style.height = `${imageHeight}px`;
-        updateImageDimensions(); // 更新圖片尺寸相關的計算
-      }
+      scale -= scaleStep;
+      if (scale < 0.1) scale = 0.1;
+      updateImageTransform();
+    } else if (e.key === 'ArrowLeft') {
+      translateX -= translateStep;
+      updateImageTransform();
+    } else if (e.key === 'ArrowRight') {
+      translateX += translateStep;
+      updateImageTransform();
     }
   });
 
-  // 初始載入圖片並設定初始位置
-  loadImages();
+  // 初始載入預設圖片 (您可以根據需求修改)
+  loadDefaultImages();
 </script>
-
-</body>
-</html>
