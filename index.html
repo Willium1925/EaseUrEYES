@@ -19,14 +19,22 @@
       height: 100vh;
     }
 
-    /* 上方按鈕區 */
-    .button-group {
-      height: 60px;
+    /* 上方控制區 */
+    .control-group {
+      height: auto; /* 根據內容自動調整高度 */
+      padding: 10px;
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* 改為垂直排列 */
       align-items: center;
       background-color: #4c5359;
       border-bottom: 1px solid #ccc;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 10px; /* 按鈕區塊下方增加間距 */
     }
 
     button {
@@ -34,6 +42,26 @@
       font-size: 16px;
       margin: 0 10px;
       cursor: pointer;
+    }
+
+    .url-input-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px; /* 輸入框區塊下方增加間距 */
+    }
+
+    label {
+      color: #ffffff;
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      flex-grow: 1; /* 讓輸入框填滿剩餘空間 */
     }
 
     /* 下方顯示區 */
@@ -47,145 +75,126 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      transition: left 0.1s ease; /* 使用 left 屬性進行平滑移動 */
-    }
-
-    /* 圖形樣式 */
-    .dot {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-    }
-
-    .solid-dot {
-      background-color: #d6d574;
-    }
-
-    .ring-dot {
-      border: 15px solid #8ed9a0;
-      background-color: transparent;
+      transition: left 0.1s ease, height 0.1s ease; /* 加入 height 的 transition */
+      height: 300px; /* 預設高度 */
     }
 
     /* 圖片樣式 */
     .img {
-      height: 300px;
+      display: block; /* 確保圖片不會有額外間距 */
+      max-width: none; /* 移除最大寬度限制，讓 JavaScript 控制大小 */
     }
   </style>
 </head>
 <body>
 
 <div class="wrapper">
-  <div class="button-group">
-    <button onclick="switchMode('dot')">顯示圖形</button>
-    <button onclick="switchMode('image')">顯示圖片</button>
+  <div class="control-group">
+    <div class="button-group">
+      <button onclick="resetPosition()">重置位置</button>
+    </div>
+    <div class="url-input-group">
+      <label for="leftImageUrl">左圖網址：</label>
+      <input type="text" id="leftImageUrl" placeholder="請輸入左圖網址" onchange="loadImages()">
+    </div>
+    <div class="url-input-group">
+      <label for="rightImageUrl">右圖網址：</label>
+      <input type="text" id="rightImageUrl" placeholder="請輸入右圖網址" onchange="loadImages()">
+    </div>
   </div>
 
   <div class="display-area">
-    <div id="leftDot" class="item dot solid-dot" style="display: none; left: calc(50% - 50px); transform: translate(-50%, -50%);"></div>
-    <div id="rightDot" class="item dot ring-dot" style="display: none; left: calc(50% - 50px); transform: translate(-50%, -50%);"></div>
-
-    <img id="leftImg" class="item img" src="wleft.gif" alt="左圖" style="display: none;">
-    <img id="rightImg" class="item img" src="wright.gif" alt="右圖" style="display: none;">
+    <img id="leftImg" class="item img" src="wleft.gif" alt="左圖">
+    <img id="rightImg" class="item img" src="wright.gif" alt="右圖">
   </div>
 </div>
 
 <script>
-  const leftDot = document.getElementById('leftDot');
-  const rightDot = document.getElementById('rightDot');
   const leftImg = document.getElementById('leftImg');
   const rightImg = document.getElementById('rightImg');
   const displayArea = document.querySelector('.display-area');
+  const leftImageUrlInput = document.getElementById('leftImageUrl');
+  const rightImageUrlInput = document.getElementById('rightImageUrl');
 
-  let mode = 'image'; // 預設為圖片模式
   let distance = 0;
-  const step = 3;
-  const dotWidth = 100; // 圖形寬度 (直徑)
+  const moveStep = 3;
+  let imageHeight = 300; // 初始圖片高度
+  const scaleStep = 5; // 調整圖片大小的步長
   let leftImageWidth = 0;
   let rightImageWidth = 0;
   let maxDistance = 0;
 
   // 在圖片載入後取得實際寬度並設定初始位置
-  leftImg.onload = function() {
-    leftImageWidth = this.offsetWidth;
+  function updateImageDimensions() {
+    leftImageWidth = leftImg.offsetWidth;
+    rightImageWidth = rightImg.offsetWidth;
     updateMaxDistance();
-    if (mode === 'image') {
-      setInitialImagePosition();
-    }
-  };
+    setInitialImagePosition();
+  }
 
-  rightImg.onload = function() {
-    rightImageWidth = this.offsetWidth;
-    updateMaxDistance();
-    if (mode === 'image') {
-      setInitialImagePosition();
-    }
-  };
+  leftImg.onload = updateImageDimensions;
+  rightImg.onload = updateImageDimensions;
 
   function updatePosition() {
-    if (mode === 'dot') {
-      leftDot.style.left = `calc(50% - ${distance}px)`;
-      rightDot.style.left = `calc(50% + ${distance}px)`;
-    } else if (mode === 'image') {
-      leftImg.style.left = `calc(50% - ${leftImageWidth}px - ${distance}px)`;
-      rightImg.style.left = `calc(50% + ${distance}px)`;
-    }
+    leftImg.style.left = `calc(50% - ${leftImageWidth}px - ${distance}px)`;
+    rightImg.style.left = `calc(50% + ${distance}px)`;
   }
 
   function updateMaxDistance() {
-    if (mode === 'image' && leftImageWidth > 0 && rightImageWidth > 0) {
+    if (leftImageWidth > 0 && rightImageWidth > 0) {
       maxDistance = window.innerWidth / 2 - (leftImageWidth / 2 + rightImageWidth / 2);
-    } else if (mode === 'dot') {
-      maxDistance = window.innerWidth / 2 - dotWidth / 2;
     } else {
       maxDistance = 0; // 初始狀態或圖片未載入時
     }
   }
 
   function setInitialImagePosition() {
-    if (mode === 'image' && leftImageWidth > 0 && rightImageWidth > 0) {
+    if (leftImageWidth > 0 && rightImageWidth > 0) {
       leftImg.style.left = `calc(50% - ${leftImageWidth}px)`;
       rightImg.style.left = `50%`;
     }
   }
 
-  function switchMode(newMode) {
-    mode = newMode;
-    distance = 0; // 切換模式時重置 distance
+  function resetPosition() {
+    distance = 0;
+    updatePosition();
+  }
 
-    if (mode === 'dot') {
-      leftDot.style.display = 'block';
-      rightDot.style.display = 'block';
-      leftImg.style.display = 'none';
-      rightImg.style.display = 'none';
-      updateMaxDistance();
-      updatePosition();
-    } else {
-      leftDot.style.display = 'none';
-      rightDot.style.display = 'none';
-      leftImg.style.display = 'block';
-      rightImg.style.display = 'block';
-      setInitialImagePosition();
-      updateMaxDistance();
-      updatePosition();
-    }
+  function loadImages() {
+    const leftUrl = leftImageUrlInput.value;
+    const rightUrl = rightImageUrlInput.value;
+    leftImg.src = leftUrl || 'wleft.gif'; // 如果沒有輸入網址，則使用預設圖片
+    rightImg.src = rightUrl || 'wright.gif'; // 如果沒有輸入網址，則使用預設圖片
   }
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight') {
       if (distance < maxDistance) {
-        distance += step;
+        distance += moveStep;
         updatePosition();
       }
     } else if (e.key === 'ArrowLeft') {
       if (distance > 0) {
-        distance -= step;
+        distance -= moveStep;
         updatePosition();
+      }
+    } else if (e.key === 'ArrowUp') {
+      imageHeight += scaleStep;
+      leftImg.style.height = `${imageHeight}px`;
+      rightImg.style.height = `${imageHeight}px`;
+      updateImageDimensions(); // 更新圖片尺寸相關的計算
+    } else if (e.key === 'ArrowDown') {
+      if (imageHeight > scaleStep) {
+        imageHeight -= scaleStep;
+        leftImg.style.height = `${imageHeight}px`;
+        rightImg.style.height = `${imageHeight}px`;
+        updateImageDimensions(); // 更新圖片尺寸相關的計算
       }
     }
   });
 
-  // 初始化
-  switchMode('image');
+  // 初始載入圖片並設定初始位置
+  loadImages();
 </script>
 
 </body>
